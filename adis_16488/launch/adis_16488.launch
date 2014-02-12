@@ -1,0 +1,4 @@
+<launch>
+  <node pkg="adis_16488" type="adis_imu.py" name="adis_16488" output="screen"/>
+  <node pkg="adis_16488" type="adis_3D_visualization.py" name="adis_3D_visualization" output="screen"/>  
+</launch>
