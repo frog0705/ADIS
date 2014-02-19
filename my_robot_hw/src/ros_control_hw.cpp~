@@ -1,0 +1,75 @@
+#include <ros/ros.h>
+#include <hardware_interface/joint_command_interface.h>
+#include <hardware_interface/joint_state_interface.h>
+#include <hardware_interface/robot_hw.h>
+#include <controller_manager/controller_manager.h>
+
+class MyRobotHW : public hardware_interface::RobotHW
+{
+public:
+  MyRobotHW()
+ {
+   // connect and register the joint state interface
+   hardware_interface::JointStateHandle state_handle_a("joint1", &pos[0], &vel[0], &eff[0]);
+   jnt_state_interface.registerHandle(state_handle_a);
+
+   hardware_interface::JointStateHandle state_handle_b("joint2", &pos[1], &vel[1], &eff[1]);
+   jnt_state_interface.registerHandle(state_handle_b);
+
+   registerInterface(&jnt_state_interface);
+
+   // connect and register the joint position interface
+   hardware_interface::JointHandle pos_handle_a(jnt_state_interface.getHandle("joint1"), &cmd[0]);
+   jnt_pos_interface.registerHandle(pos_handle_a);
+
+   hardware_interface::JointHandle pos_handle_b(jnt_state_interface.getHandle("joint2"), &cmd[1]);
+   jnt_pos_interface.registerHandle(pos_handle_b);
+
+   registerInterface(&jnt_pos_interface);
+  }
+
+ 
+
+private:
+  hardware_interface::JointStateInterface jnt_state_interface;
+  hardware_interface::PositionJointInterface jnt_pos_interface;
+  double cmd[2];
+  double pos[2];
+  double vel[2];
+  double eff[2];
+};
+
+void MyRobotHW::read()
+{
+
+}
+
+void MyRobotHW::write()
+{
+
+}
+
+
+int main(int argc, char **argv)
+{
+  ros::init(argc, argv, "hw_test");
+
+  ros::AsyncSpinner spinner(1);
+  spinner.start();
+
+  MyRobotHW robotHW;
+
+  ros::NodeHandle nh;
+  controller_manager::ControllerManager cm(&robotHW, nh);
+
+  ros::Duration period(1.0);
+  while (ros::ok())
+  {
+     ROS_INFO("loop");
+     robotHW.read();
+     cm.update(ros::Time::now(), period);
+     robotHW.write();
+     period.sleep();
+  }
+  return(0);
+}
